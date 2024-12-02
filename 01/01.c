@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-#define MAX_ROW_COUNT (4000000)
+#define MAX_ROW_COUNT 4000000
 
 static void get_input(int, char **);
 static void parse_input(void);
