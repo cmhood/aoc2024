@@ -9,8 +9,8 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-#define MAX_REPORT_COUNT 1000
-#define MAX_REPORT_LEVEL_COUNT 100000
+#define MAX_REPORT_COUNT 500000
+#define MAX_REPORT_LEVEL_COUNT 1000
 
 static void get_input(int, char **);
 static void parse_input(void);
@@ -35,7 +35,7 @@ main(int argc, char **argv)
 #ifdef SILVER
 	int safe_report_count = 0;
 	for (int i = 0; i < report_count; ++i) {
-		Report *r = &reports[i];
+		Report const *r = &reports[i];
 		bool inc = r->levels[0] < r->levels[1];
 		for (int j = 0; j < r->level_count - 1; ++j) {
 			int32_t a = r->levels[j];
@@ -55,25 +55,26 @@ next_report:
 #ifdef GOLD
 	int safe_report_count = 0;
 	for (int i = 0; i < report_count; ++i) {
-		Report r = reports[i];
+		Report const *r = &reports[i];
+		int damp_state = 0;
 		int damp = INT_MAX;
-		bool alt_damp = false;
 
-		bool inc = (r.levels[0] < r.levels[1]) + (r.levels[1] <
-		    r.levels[2]) + (r.levels[2] < r.levels[3]) > 1;
-		for (int j = 0; j < r.level_count - 2;) {
-			int32_t a = r.levels[j + (damp <= j)];
-			int32_t b = r.levels[j + 1 + (damp <= j + 1)];
+		bool inc = (r->levels[0] < r->levels[1]) + (r->levels[1] <
+		    r->levels[2]) + (r->levels[2] < r->levels[3]) > 1;
+		for (int j = 0; j < r->level_count - 2;) {
+			int32_t a = r->levels[j + (damp <= j)];
+			int32_t b = r->levels[j + 1 + (damp <= j + 1)];
 			int32_t d = abs(a - b);
 			if (!(1 <= d && d <= 3) || (inc ^ (a < b))) {
-				if (alt_damp) {
-					goto next_report;
-				}
-				if (damp == INT_MAX) {
+				switch (damp_state++) {
+				case 0:
 					damp = j;
-				} else {
-					alt_damp = true;
+					break;
+				case 1:
 					++damp;
+					break;
+				case 2:
+					goto next_report;
 				}
 				j = damp - 1;
 				if (j < 0) {
