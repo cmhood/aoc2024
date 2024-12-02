@@ -44,12 +44,11 @@ main(int argc, char **argv)
 		while (j < row_count && rows[1][j] < n) {
 			++j;
 		}
-		int count = 0;
+		ptrdiff_t start = j;
 		while (j < row_count && rows[1][j] == n) {
 			++j;
-			++count;
 		}
-		sum += n * count;
+		sum += n * (j - start);
 	}
 	printf("%ld\n", sum);
 #endif
