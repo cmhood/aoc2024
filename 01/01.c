@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -11,14 +13,14 @@
 
 static void get_input(int, char **);
 static void parse_input(void);
-static void sort(ptrdiff_t, int *);
-static void selection_sort(ptrdiff_t, int *);
+static void sort(ptrdiff_t, int32_t *);
+static void selection_sort(ptrdiff_t, int32_t *);
 
 static ptrdiff_t input_length = 0;
 static char const *input = NULL;
 
 static ptrdiff_t row_count = 0;
-static int rows[2][MAX_ROW_COUNT] = {0};
+static int32_t rows[2][MAX_ROW_COUNT] = {0};
 
 int
 main(int argc, char **argv)
@@ -30,17 +32,17 @@ main(int argc, char **argv)
 	sort(row_count, rows[1]);
 
 #ifdef SILVER
-	long sum = 0;
+	int64_t sum = 0;
 	for (ptrdiff_t i = 0; i < row_count; ++i) {
 		sum += abs(rows[0][i] - rows[1][i]);
 	}
-	printf("%ld\n", sum);
+	printf("%" PRIi64 "\n", sum);
 #endif
 
 #ifdef GOLD
-	long sum = 0;
+	int64_t sum = 0;
 	for (ptrdiff_t i = 0, j = 0; i < row_count; ++i) {
-		int n = rows[0][i];
+		int32_t n = rows[0][i];
 		while (j < row_count && rows[1][j] < n) {
 			++j;
 		}
@@ -50,7 +52,7 @@ main(int argc, char **argv)
 		}
 		sum += n * (j - start);
 	}
-	printf("%ld\n", sum);
+	printf("%" PRIi64 "\n", sum);
 #endif
 }
 
@@ -86,7 +88,7 @@ parse_input(void)
 {
 	for (ptrdiff_t i = 0; i < input_length;) {
 		for (int col = 0; col < 2; ++col) {
-			int n = 0;
+			int32_t n = 0;
 			for (;;) {
 				if (i >= input_length) {
 					goto fail;
@@ -112,7 +114,7 @@ fail:
 }
 
 static void
-sort(ptrdiff_t length, int *arr)
+sort(ptrdiff_t length, int32_t *arr)
 {
 	if (length <= 8) {
 		selection_sort(length, arr);
@@ -121,8 +123,8 @@ sort(ptrdiff_t length, int *arr)
 
 	ptrdiff_t lo = 0;
 	ptrdiff_t hi = length;
-	int pivot = arr[0];
-	int val = arr[1];
+	int32_t pivot = arr[0];
+	int32_t val = arr[1];
 	while (lo + 1 < hi) {
 		if (val <= pivot) {
 			arr[lo] = val;
@@ -130,7 +132,7 @@ sort(ptrdiff_t length, int *arr)
 			++lo;
 		} else {
 			--hi;
-			int tmp = arr[hi];
+			int32_t tmp = arr[hi];
 			arr[hi] = val;
 			val = tmp;
 		}
@@ -142,7 +144,7 @@ sort(ptrdiff_t length, int *arr)
 }
 
 static void
-selection_sort(ptrdiff_t length, int *arr)
+selection_sort(ptrdiff_t length, int32_t *arr)
 {
 	for (ptrdiff_t i = 0; i < length; ++i) {
 		ptrdiff_t min = i;
@@ -151,7 +153,7 @@ selection_sort(ptrdiff_t length, int *arr)
 				min = j;
 			}
 		}
-		int tmp = arr[i];
+		int32_t tmp = arr[i];
 		arr[i] = arr[min];
 		arr[min] = tmp;
 	}
