@@ -4,11 +4,11 @@
 .PHONY: default
 default: silver gold
 
-silver: 02.c
-	$(CC) -o $@ 02.c -DSILVER $(CFLAGS)
+silver: 02.cpp
+	$(CXX) -o $@ 02.cpp -DSILVER $(CXXFLAGS)
 
-gold: 02.c
-	$(CC) -o $@ 02.c -DGOLD $(CFLAGS)
+gold: 02.cpp
+	$(CXX) -o $@ 02.cpp -DGOLD $(CXXFLAGS)
 
 .PHONY: clean
 clean:

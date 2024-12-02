@@ -15,10 +15,10 @@
 static void get_input(int, char **);
 static void parse_input(void);
 
-typedef struct Report {
+struct Report {
 	int level_count;
 	int32_t levels[MAX_REPORT_LEVEL_COUNT];
-} Report;
+};
 
 static ptrdiff_t input_length = 0;
 static char const *input = NULL;
@@ -73,7 +73,7 @@ next_report:
 				case 1:
 					++damp;
 					break;
-				case 2:
+				default:
 					goto next_report;
 				}
 				j = damp - 1;
@@ -112,7 +112,8 @@ get_input(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	input = mmap(NULL, input_length, PROT_READ, MAP_PRIVATE, fd, 0);
+	input = (char const *)mmap(NULL, input_length, PROT_READ, MAP_PRIVATE,
+	    fd, 0);
 	if (input == MAP_FAILED) {
 		perror("mmap");
 		exit(EXIT_FAILURE);
