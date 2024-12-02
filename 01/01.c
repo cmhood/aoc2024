@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <assert.h>
 #include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -13,6 +12,7 @@
 static void get_input(int, char **);
 static void parse_input(void);
 static void sort(ptrdiff_t, int *);
+static void selection_sort(ptrdiff_t, int *);
 
 static ptrdiff_t input_length = 0;
 static char const *input = NULL;
@@ -115,7 +115,8 @@ fail:
 static void
 sort(ptrdiff_t length, int *arr)
 {
-	if (length < 2) {
+	if (length <= 8) {
+		selection_sort(length, arr);
 		return;
 	}
 
@@ -139,4 +140,20 @@ sort(ptrdiff_t length, int *arr)
 
 	sort(lo, arr);
 	sort(length - hi, &arr[hi]);
+}
+
+static void
+selection_sort(ptrdiff_t length, int *arr)
+{
+	for (ptrdiff_t i = 0; i < length; ++i) {
+		ptrdiff_t min = i;
+		for (ptrdiff_t j = i + 1; j < length; ++j) {
+			if (arr[j] < arr[min]) {
+				min = j;
+			}
+		}
+		int tmp = arr[i];
+		arr[i] = arr[min];
+		arr[min] = tmp;
+	}
 }
