@@ -1,98 +1,40 @@
-#include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <string_view>
+#include <vector>
+#include <charconv>
 
-#define MAX_REPORT_COUNT 500000
-#define MAX_REPORT_LEVEL_COUNT 1000
-
-struct Report {
-	int level_count;
-	int32_t levels[MAX_REPORT_LEVEL_COUNT];
-};
-
-static void get_input(int, char **);
-static void get_next_report(Report *, ptrdiff_t *);
-
-static ptrdiff_t input_length = 0;
-static char const *input = NULL;
+static std::string_view get_input(int, char **);
+static char const *parse(char const *, char const *, int32_t *, bool *);
+static bool is_report_safe(std::vector<int32_t> const &);
 
 int
 main(int argc, char **argv)
 {
-	get_input(argc, argv);
+	std::string_view input = get_input(argc, argv);
 
-#ifdef SILVER
-	int safe_report_count = 0;
-	for (ptrdiff_t cursor = 0; cursor < input_length;) {
-		Report r;
-		get_next_report(&r, &cursor);
-
-		bool inc = r.levels[0] < r.levels[1];
-		for (int j = 0; j < r.level_count - 1; ++j) {
-			int32_t a = r.levels[j];
-			int32_t b = r.levels[j + 1];
-			int32_t d = abs(a - b);
-			if (!(1 <= d && d <= 3) || (inc ^ (a < b))) {
-				goto next_report;
-			}
+	int32_t count = 0;
+	for (char const *p = input.data(); p < &input[input.size()];) {
+		std::vector<int32_t> levels;
+		for (bool eol = false; !eol;) {
+			int32_t n;
+			p = parse(p, &input[input.size()], &n, &eol);
+			levels.push_back(n);
 		}
-		++safe_report_count;
-next_report:
-		;
-	}
-	printf("%d\n", safe_report_count);
-#endif
-
-#ifdef GOLD
-	int safe_report_count = 0;
-	for (ptrdiff_t cursor = 0; cursor < input_length;) {
-		Report r;
-		get_next_report(&r, &cursor);
-
-		int damp_state = 0;
-		int damp = INT_MAX;
-
-		bool inc = (r.levels[0] < r.levels[1]) + (r.levels[1] <
-		    r.levels[2]) + (r.levels[2] < r.levels[3]) > 1;
-		for (int j = 0; j < r.level_count - 2;) {
-			int32_t a = r.levels[j + (damp <= j)];
-			int32_t b = r.levels[j + 1 + (damp <= j + 1)];
-			int32_t d = abs(a - b);
-			if (!(1 <= d && d <= 3) || (inc ^ (a < b))) {
-				switch (damp_state++) {
-				case 0:
-					damp = j;
-					break;
-				case 1:
-					++damp;
-					break;
-				default:
-					goto next_report;
-				}
-				j = damp - 1;
-				if (j < 0) {
-					j = 0;
-				}
-				continue;
-			}
-			++j;
+		if (is_report_safe(levels)) {
+			++count;
 		}
-		++safe_report_count;
-next_report:
-		;
 	}
-	printf("%d\n", safe_report_count);
-#endif
+	printf("%" PRIi32 "\n", count);
 }
 
-static void
+static std::string_view
 get_input(int argc, char **argv)
 {
 	if (argc != 2) {
@@ -106,43 +48,76 @@ get_input(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	input_length = lseek(fd, 0, SEEK_END);
-	if (input_length < 0) {
+	off_t length = lseek(fd, 0, SEEK_END);
+	if (length < 0) {
 		perror("lseek");
 		exit(EXIT_FAILURE);
 	}
-
-	input = (char *)mmap(NULL, input_length, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (input == MAP_FAILED) {
+	void *data = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (data == MAP_FAILED) {
 		perror("mmap");
 		exit(EXIT_FAILURE);
 	}
+	return {static_cast<char const *>(data), static_cast<size_t>(length)};
 }
 
-static void
-get_next_report(Report *report, ptrdiff_t *cursor)
+static char const *
+parse(char const *ptr, char const *end, int32_t *n, bool *eol)
 {
-	int level_count = 0;
-	int32_t n = 0;
-	for (ptrdiff_t i = *cursor; i < input_length; ++i) {
-		char c = input[i];
-		if ('0' <= c && c <= '9') {
-			n *= 10;
-			n += c - '0';
-		} else if (c == ' ') {
-			report->levels[level_count] = n;
-			++level_count;
-			n = 0;
-		} else if (c == '\n') {
-			report->levels[level_count] = n;
-			++level_count;
-			report->level_count = level_count;
-			*cursor = i + 1;
-			return;
-		} else {
-			(void)*(char *)0;
+	std::from_chars_result result = std::from_chars(ptr, end, *n);
+	if (result.ec != std::errc()) {
+		fprintf(stderr, "parse error\n");
+		exit(EXIT_FAILURE);
+	}
+	char const *p = result.ptr;
+	while (p < end && *p == ' ') {
+		++p;
+	}
+	if (p < end && (*eol = *p == '\n')) {
+		++p;
+	}
+	return p;
+}
+
+static bool
+is_report_safe(std::vector<int32_t> const &levels)
+{
+#ifdef SILVER
+	bool inc = levels[0] < levels[1];
+	for (size_t i = 0; i < levels.size() - 1; ++i) {
+		int32_t l = levels[i];
+		int32_t r = levels[i + 1];
+		int32_t d = abs(l - r);
+		if (inc ^ (l < r) || !(1 <= d && d <= 3)) {
+			return false;
 		}
 	}
-	fprintf(stderr, "parse error\n");
-	exit(EXIT_FAILURE);
+	return true;
+#else
+	int damp_state = 0;
+	size_t damp = SIZE_MAX;
+	bool inc = (levels[0] < levels[1]) + (levels[1] < levels[2]) +
+	    (levels[2] < levels[3]) > 1;
+	for (size_t i = 0; i < levels.size() - 2;) {
+		int32_t l = levels[i + (damp <= i)];
+		int32_t r = levels[i + 1 + (damp <= (i + 1))];
+		int32_t d = abs(l - r);
+		if (!(inc ^ (l < r)) && 1 <= d && d <= 3) {
+			++i;
+			continue;
+		}
+		switch (damp_state++) {
+		case 0:
+			damp = i;
+			break;
+		case 1:
+			++damp;
+			break;
+		default:
+			return false;
+		}
+		i = damp > 0 ? damp - 1 : 0;
+	}
+	return true;
+#endif
 }
