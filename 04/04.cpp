@@ -37,7 +37,7 @@ get_input(int argc, char **argv)
 		perror("lseek");
 		exit(EXIT_FAILURE);
 	}
-	void *data = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+	void *data = mmap(nullptr, length, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (data == MAP_FAILED) {
 		perror("mmap");
 		exit(EXIT_FAILURE);
