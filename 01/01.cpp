@@ -87,7 +87,7 @@ get_input(int argc, char **argv)
 static char const *
 parse(char const *ptr, char const *end, int32_t *n, size_t padding)
 {
-	auto result = std::from_chars(ptr, end, *n);
+	std::from_chars_result result = std::from_chars(ptr, end, *n);
 	if (result.ec != std::errc() || result.ptr + padding > end) {
 		fprintf(stderr, "parse error\n");
 		exit(EXIT_FAILURE);
