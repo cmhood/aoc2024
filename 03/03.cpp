@@ -18,11 +18,16 @@ main(int argc, char **argv)
 
 #ifdef SILVER
 	std::regex re("mul\\((\\d{1,10}),(\\d{1,10})\\)");
+#else
+	std::regex re("mul\\((\\d{1,10}),(\\d{1,10})\\)|do\\(\\)|don't\\(\\)");
+#endif
+
 	std::regex_iterator<std::string_view::iterator>
 	    i(input.begin(), input.end(), re);
 	std::regex_iterator<std::string_view::iterator> end;
-
 	int64_t sum = 0;
+
+#ifdef SILVER
 	for (; i != end; ++i) {
 		std::match_results<std::string_view::iterator> match = *i;
 
@@ -32,19 +37,9 @@ main(int argc, char **argv)
 			    match[j + 1];
 		        std::from_chars(&*sm.first, &*sm.second, n[j]);
 		}
-
 		sum += n[0] * n[1];
 	}
-	printf("%" PRIu64 "\n", sum);
-#endif
-
-#ifdef GOLD
-	std::regex re("mul\\((\\d{1,10}),(\\d{1,10})\\)|do\\(\\)|don't\\(\\)");
-	std::regex_iterator<std::string_view::iterator>
-	    i(input.begin(), input.end(), re);
-	std::regex_iterator<std::string_view::iterator> end;
-
-	int64_t sum = 0;
+#else
 	bool dont = false;
 	for (; i != end; ++i) {
 		std::match_results<std::string_view::iterator> match = *i;
@@ -54,7 +49,6 @@ main(int argc, char **argv)
 			dont = s[2] == 'n';
 			continue;
 		}
-
 		if (dont) {
 			continue;
 		}
@@ -65,11 +59,11 @@ main(int argc, char **argv)
 			    match[j + 1];
 		        std::from_chars(&*sm.first, &*sm.second, n[j]);
 		}
-
 		sum += n[0] * n[1];
 	}
-	printf("%" PRIu64 "\n", sum);
 #endif
+
+	printf("%" PRIu64 "\n", sum);
 }
 
 static std::string_view
