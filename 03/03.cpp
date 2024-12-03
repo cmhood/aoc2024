@@ -28,7 +28,7 @@ main(int argc, char **argv)
 	for (; i != end; ++i) {
 		std::match_results<std::string_view::iterator> match = *i;
 
-		std::array<int, 2> n;
+		std::array<int32_t, 2> n;
 		for (int j = 0; j < 2; ++j) {
 			std::sub_match<std::string_view::iterator> sm =
 			    match[j + 1];
@@ -61,7 +61,7 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		std::array<int, 2> n;
+		std::array<int32_t, 2> n;
 		for (int j = 0; j < 2; ++j) {
 			std::sub_match<std::string_view::iterator> sm =
 			    match[j + 1];
