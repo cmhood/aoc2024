@@ -96,6 +96,10 @@ is_report_safe(std::vector<int32_t> const &levels)
 #else
 	int damp_state = 0;
 	size_t damp = SIZE_MAX;
+	if (levels.size() < 4) {
+		fprintf(stderr, "all reports must have at least 4 levels\n");
+		exit(EXIT_FAILURE);
+	}
 	bool inc = (levels[0] < levels[1]) + (levels[1] < levels[2]) +
 	    (levels[2] < levels[3]) > 1;
 	for (size_t i = 0; i < levels.size() - 2;) {
