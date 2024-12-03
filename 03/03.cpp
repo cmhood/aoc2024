@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include <iostream>
 #include <regex>
 #include <string_view>
 #include <charconv>
@@ -37,7 +35,7 @@ main(int argc, char **argv)
 
 		sum += n[0] * n[1];
 	}
-	std::cout << sum << '\n';
+	printf("%" PRIu64 "\n", sum);
 #endif
 
 #ifdef GOLD
@@ -70,7 +68,7 @@ main(int argc, char **argv)
 
 		sum += n[0] * n[1];
 	}
-	std::cout << sum << '\n';
+	printf("%" PRIu64 "\n", sum);
 #endif
 }
 
