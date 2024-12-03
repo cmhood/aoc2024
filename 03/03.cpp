@@ -24,7 +24,7 @@ main(int argc, char **argv)
 	    i(input.begin(), input.end(), re);
 	std::regex_iterator<std::string_view::iterator> end;
 
-	int32_t sum = 0;
+	int64_t sum = 0;
 	for (; i != end; ++i) {
 		std::match_results<std::string_view::iterator> match = *i;
 
@@ -46,7 +46,7 @@ main(int argc, char **argv)
 	    i(input.begin(), input.end(), re);
 	std::regex_iterator<std::string_view::iterator> end;
 
-	int32_t sum = 0;
+	int64_t sum = 0;
 	bool dont = false;
 	for (; i != end; ++i) {
 		std::match_results<std::string_view::iterator> match = *i;
