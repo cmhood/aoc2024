@@ -96,7 +96,5 @@ get_input(int argc, char **argv)
 		perror("mmap");
 		exit(EXIT_FAILURE);
 	}
-
-	return {static_cast<char const *>(data),
-	    static_cast<std::string_view::size_type>(length)};
+	return {static_cast<char const *>(data), static_cast<size_t>(length)};
 }
