@@ -1,7 +1,6 @@
 .POSIX:
 .SUFFIXES:
 
-.PHONY: default
 default: silver gold
 
 silver: 02.cpp
@@ -10,6 +9,7 @@ silver: 02.cpp
 gold: 02.cpp
 	$(CXX) -o $@ 02.cpp -DGOLD $(CXXFLAGS)
 
-.PHONY: clean
 clean:
 	rm -f silver gold
+
+.PHONY: default clean
