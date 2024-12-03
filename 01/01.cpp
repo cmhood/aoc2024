@@ -1,62 +1,63 @@
-#include <assert.h>
-#include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <string_view>
+#include <vector>
+#include <charconv>
+#include <algorithm>
 
-#define MAX_ROW_COUNT 4000000
-
-static void get_input(int, char **);
-static void parse_input(void);
-static void sort(ptrdiff_t, int32_t *);
-static void selection_sort(ptrdiff_t, int32_t *);
-
-static ptrdiff_t input_length = 0;
-static char const *input = NULL;
-
-static ptrdiff_t row_count = 0;
-static int32_t rows[2][MAX_ROW_COUNT] = {0};
+static std::string_view get_input(int, char **);
+static char const *parse(char const *, char const *, int32_t *, size_t);
 
 int
 main(int argc, char **argv)
 {
-	get_input(argc, argv);
-	parse_input();
+	std::string_view input = get_input(argc, argv);
 
-	sort(row_count, rows[0]);
-	sort(row_count, rows[1]);
+	std::vector<int32_t> left;
+	std::vector<int32_t> right;
+
+	for (char const *p = input.data(); p < &input[input.size()];) {
+		int32_t l, r;
+		p = parse(p, &input[input.size()], &l, 3);
+		p = parse(p, &input[input.size()], &r, 1);
+		left.push_back(l);
+		right.push_back(r);
+	}
+
+	std::sort(left.begin(), left.end());
+	std::sort(right.begin(), right.end());
 
 #ifdef SILVER
 	int64_t sum = 0;
-	for (ptrdiff_t i = 0; i < row_count; ++i) {
-		sum += abs(rows[0][i] - rows[1][i]);
+	for (size_t i = 0; i < left.size(); ++i) {
+		sum += abs(left[i] - right[i]);
 	}
-	printf("%" PRIi64 "\n", sum);
-#endif
-
-#ifdef GOLD
+	printf("%" PRIu64 "\n", sum);
+#else
 	int64_t sum = 0;
-	for (ptrdiff_t i = 0, j = 0; i < row_count; ++i) {
-		int32_t n = rows[0][i];
-		while (j < row_count && rows[1][j] < n) {
+	size_t j = 0;
+	for (size_t i = 0; i < left.size(); ++i) {
+		int32_t l = left[i];
+		while (j < right.size() && right[j] < l) {
 			++j;
 		}
-		ptrdiff_t start = j;
-		while (j < row_count && rows[1][j] == n) {
+		size_t start = j;
+		while (j < right.size() && right[j] == l) {
 			++j;
 		}
-		sum += n * (j - start);
+		sum += l * (j - start);
 	}
-	printf("%" PRIi64 "\n", sum);
+	printf("%" PRIu64 "\n", sum);
 #endif
 }
 
-static void
+static std::string_view
 get_input(int argc, char **argv)
 {
 	if (argc != 2) {
@@ -70,91 +71,26 @@ get_input(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	input_length = lseek(fd, 0, SEEK_END);
-	if (input_length < 0) {
+	off_t length = lseek(fd, 0, SEEK_END);
+	if (length < 0) {
 		perror("lseek");
 		exit(EXIT_FAILURE);
 	}
-
-	input = (char *)mmap(NULL, input_length, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (input == MAP_FAILED) {
+	void *data = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (data == MAP_FAILED) {
 		perror("mmap");
 		exit(EXIT_FAILURE);
 	}
+	return {static_cast<char const *>(data), static_cast<size_t>(length)};
 }
 
-static void
-parse_input(void)
+static char const *
+parse(char const *ptr, char const *end, int32_t *n, size_t padding)
 {
-	for (ptrdiff_t i = 0; i < input_length;) {
-		for (int col = 0; col < 2; ++col) {
-			int32_t n = 0;
-			for (;;) {
-				if (i >= input_length) {
-					goto fail;
-				}
-				char c = input[i];
-				if (!('0' <= c && c <= '9')) {
-					break;
-				}
-				n = 10 * n + (c - '0');
-				++i;
-			}
-			rows[col][row_count] = n;
-			i += (col == 0 ? 3 : 1);
-		}
-		if (++row_count > MAX_ROW_COUNT) {
-			goto fail;
-		}
+	auto result = std::from_chars(ptr, end, *n);
+	if (result.ec != std::errc() || result.ptr + padding > end) {
+		fprintf(stderr, "parse error\n");
+		exit(EXIT_FAILURE);
 	}
-	return;
-fail:
-	fprintf(stderr, "parse error\n");
-	exit(EXIT_FAILURE);
-}
-
-static void
-sort(ptrdiff_t length, int32_t *arr)
-{
-	if (length <= 8) {
-		selection_sort(length, arr);
-		return;
-	}
-
-	ptrdiff_t lo = 0;
-	ptrdiff_t hi = length;
-	int32_t pivot = arr[0];
-	int32_t val = arr[1];
-	while (lo + 1 < hi) {
-		if (val <= pivot) {
-			arr[lo] = val;
-			val = arr[lo + 2];
-			++lo;
-		} else {
-			--hi;
-			int32_t tmp = arr[hi];
-			arr[hi] = val;
-			val = tmp;
-		}
-	}
-	arr[lo] = pivot;
-
-	sort(lo, arr);
-	sort(length - hi, &arr[hi]);
-}
-
-static void
-selection_sort(ptrdiff_t length, int32_t *arr)
-{
-	for (ptrdiff_t i = 0; i < length; ++i) {
-		ptrdiff_t min = i;
-		for (ptrdiff_t j = i + 1; j < length; ++j) {
-			if (arr[j] < arr[min]) {
-				min = j;
-			}
-		}
-		int32_t tmp = arr[i];
-		arr[i] = arr[min];
-		arr[min] = tmp;
-	}
+	return result.ptr + padding;
 }
