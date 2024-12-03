@@ -112,8 +112,7 @@ get_input(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	input = (char const *)mmap(NULL, input_length, PROT_READ, MAP_PRIVATE,
-	    fd, 0);
+	input = (char *)mmap(NULL, input_length, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (input == MAP_FAILED) {
 		perror("mmap");
 		exit(EXIT_FAILURE);
