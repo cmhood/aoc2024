@@ -99,5 +99,6 @@ get_input(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	return {(char const *)data, (std::string_view::size_type)length};
+	return {static_cast<char const *>(data),
+	    static_cast<std::string_view::size_type>(length)};
 }
