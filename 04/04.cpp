@@ -49,7 +49,9 @@ find_matches(std::string_view s, size_t width)
 
 		std::array<char, pattern.size()> text;
 		std::transform(pattern.begin(), pattern.end(), text.begin(),
-		    [&](size_t n) { return s[n]; });
+		    [&](size_t n) {
+			return s[n];
+		});
 
 		count += std::equal(text.begin(), text.end(), "XMAS") ||
 		    std::equal(text.begin(), text.end(), "SAMX");
