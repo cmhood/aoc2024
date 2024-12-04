@@ -13,8 +13,6 @@
 
 static std::string_view get_input(int, char **);
 static size_t find_matches(std::string_view, size_t);
-static bool is_match(std::string_view, size_t, bool);
-static bool is_match(std::array<char, 5> const &);
 
 int
 main(int argc, char **argv)
@@ -40,50 +38,40 @@ static size_t
 find_matches(std::string_view s, size_t width)
 {
 #ifdef SILVER
+	size_t count = 0;
 	std::array<size_t, 4> const spacings = {1, width - 1, width, width + 1};
-	size_t word_count = 0;
 	for (size_t sp : spacings) {
-		if (s.size() <= 3 * sp) {
+		std::array<size_t, 4> const pattern = {0, sp, 2 * sp, 3 * sp};
+
+		if (s.size() <= pattern.back()) {
 			break;
 		}
-		word_count += is_match(s, sp, true) + is_match(s, sp, false);
+
+		std::array<char, pattern.size()> text;
+		std::transform(pattern.begin(), pattern.end(), text.begin(),
+		    [&](size_t n) { return s[n]; });
+
+		count += std::equal(text.begin(), text.end(), "XMAS") ||
+		    std::equal(text.begin(), text.end(), "SAMX");
 	}
-	return word_count;
+	return count;
 #else
 	std::array<size_t, 5> const pattern =
 	    {0, 2, width + 1, 2 * width, 2 * width + 2};
-	if (s.size() <= pattern[4]) {
+	if (s.size() <= pattern.back()) {
 		return 0;
 	}
-	std::array<char, 5> text;
+	std::array<char, pattern.size()> text;
 	std::transform(pattern.begin(), pattern.end(), text.begin(),
-	     [&](size_t n) { return s[n]; });
-	return is_match(text);
+	    [&](size_t n) {
+		return s[n];
+	});
+	constexpr std::array<char const *, 4> matches =
+	    {"MMASS", "SMASM", "MSAMS", "SSAMM"};
+	return std::any_of(matches.begin(), matches.end(), [&](char const *m) {
+		return std::equal(text.begin(), text.end(), m);
+	});
 #endif
-}
-
-static bool
-is_match(std::string_view s, size_t spacing, bool reverse)
-{
-	std::string_view const text = "XMAS";
-	for (size_t i = 0; i < text.size(); ++i) {
-		if (s[spacing * i] != text[reverse ? text.size() - i - 1 : i]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-static bool
-is_match(std::array<char, 5> const &text)
-{
-	for (size_t i = 0; i < text.size(); ++i) {
-		char c = text[i];
-		if (i == 2 ? c != 'A' : (c != 'M' && c != 'S')) {
-			return false;
-		}
-	}
-	return text[0] != text[4] && text[1] != text[3];
 }
 
 static std::string_view
