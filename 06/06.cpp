@@ -4,13 +4,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <string_view>
+#include <array>
+#include <map>
 #include <set>
-#include <algorithm>
 
+static std::map<size_t, int>
+    traverse(std::string_view, size_t, size_t, size_t = SIZE_MAX);
 static std::string_view get_input(int, char **);
 
 int
@@ -24,45 +28,57 @@ main(int argc, char **argv)
 		fprintf(stderr, "parse error\n");
 		exit(EXIT_FAILURE);
 	}
-	int width = newline - input.data() + 1;
+	size_t width = newline - input.data() + 1;
 
 	char const *ptr = static_cast<char const *>(memchr(
 	    static_cast<void const *>(input.data()), '^', input.size()));
-	size_t guard_position = ptr - input.data();
-	ptrdiff_t guard_direction = -width;
+	size_t guard_pos = ptr - input.data();
 
-	std::set<size_t> traversed_positions;
-	traversed_positions.insert(guard_position);
-	while (!(guard_direction > static_cast<ptrdiff_t>(guard_position) ||
-	    guard_direction + guard_position >= input.size() ||
-	    input[guard_direction + guard_position] == '\n')) {
-/*
-		for (size_t i = 0; i < width - 1; ++i) {
-			putchar('=');
-		}
-		putchar('\n');
-		for (size_t i = 0; i < input.size(); ++i) {
-			char c = input[i];
-			if (c == '^') {
-				c = '.';
-			}
-			if (i == guard_position) {
-				c = '@';
-			}
-			putchar(c);
-		}
-*/
+	std::map<size_t, int> traversal = traverse(input, width, guard_pos);
 
-		if (input[guard_position + guard_direction] == '#') {
-			int sgn = guard_direction >= 0 ? 1 : -1;
-			int mag = guard_direction * sgn;
-			guard_direction = sgn * (mag == 1 ? width : -1);
-		} else {
-			guard_position += guard_direction;
-			traversed_positions.insert(guard_position);
+#ifdef SILVER
+	printf("%zu\n", traversal.size());
+#else
+	std::set<size_t> obstacles;
+	for (auto const &i : traversal) {
+		size_t obs = i.first;
+		if (obs == guard_pos) {
+			continue;
+		}
+		if (traverse(input, width, guard_pos, obs).empty()) {
+			obstacles.insert(obs);
 		}
 	}
-	printf("%zu\n", traversed_positions.size());
+	printf("%zu\n", obstacles.size());
+#endif
+}
+
+static std::map<size_t, int>
+traverse(std::string_view map, size_t w, size_t pos, size_t obs)
+{
+	int dir = 0;
+	std::map<size_t, int> traversal;
+	for (;;) {
+		ptrdiff_t wi = static_cast<ptrdiff_t>(w);
+		std::array<ptrdiff_t, 4> a = {-wi, 1, wi, -1};
+		ptrdiff_t d = a[dir];
+
+		if (d > static_cast<ptrdiff_t>(pos) || d + pos >= map.size() ||
+		    map[pos + d] == '\n') {
+			++traversal[pos];
+			break;
+		}
+		if (pos + d == obs || map[pos + d] == '#') {
+			dir = (dir + 1) % 4;
+			continue;
+		}
+		++traversal[pos];
+		if (traversal[pos] > 4) {
+			return {};
+		}
+		pos += d;
+	}
+	return traversal;
 }
 
 static std::string_view
