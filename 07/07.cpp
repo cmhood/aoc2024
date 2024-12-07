@@ -67,7 +67,7 @@ has_permutation(double target, double partial, size_t count, double const *a)
 static double
 concatenate(double l, double r)
 {
-	double res = (double)pow(10.0, ceil(log10(r + 1))) * l + r;
+	double res = pow(10.0, ceil(log10(r + 1.0))) * l + r;
 	return res;
 }
 
