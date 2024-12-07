@@ -46,8 +46,8 @@ main(int argc, char **argv)
 static bool
 has_permutation(int64_t target, int64_t partial, size_t count, int64_t const *a)
 {
-	if (count == 0) {
-		return partial == target;
+	if (partial > target || count == 0) {
+		return partial == target && count == 0;
 	}
 	int64_t n = a[0];
 #ifdef SILVER
