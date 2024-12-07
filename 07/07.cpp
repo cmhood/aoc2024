@@ -15,15 +15,15 @@
 #include <charconv>
 
 struct Equation {
-	int64_t lhs;
-	std::vector<int64_t> rhs;
+	double lhs;
+	std::vector<double> rhs;
 };
 
-static bool has_permutation(int64_t, int64_t, size_t, int64_t const *);
-static int64_t concatenate(int64_t, int64_t);
+static bool has_permutation(double, double, size_t, double const *);
+static double concatenate(double, double);
 static std::string_view get_input(int, char **);
 static std::optional<Equation> parse_equation(std::string_view, size_t *);
-static int64_t parse_int(std::string_view, size_t *);
+static double parse_int(std::string_view, size_t *);
 static bool parse_char(std::string_view, size_t *, char);
 static void expect(bool);
 
@@ -33,30 +33,30 @@ main(int argc, char **argv)
 	std::string_view input = get_input(argc, argv);
 	size_t offset = 0;
 
-	int64_t count = 0;
+	double count = 0;
 	while (std::optional<Equation> eq = parse_equation(input, &offset)) {
-		std::vector<int64_t> const &v = eq->rhs;
+		std::vector<double> const &v = eq->rhs;
 		if (has_permutation(eq->lhs, v[0], v.size() - 1, &v[1])) {
 			count += eq->lhs;
 		}
 	}
-	printf("%" PRIi64 "\n", count);
+	printf("%" PRIi64 "\n", (int64_t)count);
 }
 
 static bool
-has_permutation(int64_t target, int64_t partial, size_t count, int64_t const *a)
+has_permutation(double target, double partial, size_t count, double const *a)
 {
 	if (partial > target || count == 0) {
 		return partial == target && count == 0;
 	}
-	int64_t n = a[0];
+	double n = a[0];
 #ifdef SILVER
-	std::array<int64_t, 2> options = {partial + n, partial * n};
+	std::array<double, 2> options = {partial + n, partial * n};
 #else
-	std::array<int64_t, 3> options =
+	std::array<double, 3> options =
 	    {partial + n, partial * n, concatenate(partial, n)};
 #endif
-	for (int64_t opt : options) {
+	for (double opt : options) {
 		if (has_permutation(target, opt, count - 1, &a[1])) {
 			return true;
 		}
@@ -64,10 +64,10 @@ has_permutation(int64_t target, int64_t partial, size_t count, int64_t const *a)
 	return false;
 }
 
-static int64_t
-concatenate(int64_t l, int64_t r)
+static double
+concatenate(double l, double r)
 {
-	int64_t res = (int64_t)pow(10.0, ceil(log10(r + 1))) * l + r;
+	double res = (double)pow(10.0, ceil(log10(r + 1))) * l + r;
 	return res;
 }
 
@@ -112,7 +112,7 @@ parse_equation(std::string_view input, size_t *offset)
 	expect(parse_char(input, offset, ' '));
 
 	for (;;) {
-		int64_t n = parse_int(input, offset);
+		double n = parse_int(input, offset);
 		eq.rhs.push_back(n);
 		if (parse_char(input, offset, '\n')) {
 			return eq;
@@ -121,10 +121,10 @@ parse_equation(std::string_view input, size_t *offset)
 	}
 }
 
-static int64_t
+static double
 parse_int(std::string_view input, size_t *offset)
 {
-	int64_t i;
+	double i;
 	std::from_chars_result r =
 	    std::from_chars(&input[*offset], &input[input.size()], i);
 	expect(r.ec == std::errc());
