@@ -23,7 +23,7 @@ static bool has_permutation(double, double, size_t, double const *);
 static double concatenate(double, double);
 static std::string_view get_input(int, char **);
 static std::optional<Equation> parse_equation(std::string_view, size_t *);
-static double parse_int(std::string_view, size_t *);
+static double parse_double(std::string_view, size_t *);
 static bool parse_char(std::string_view, size_t *, char);
 static void expect(bool);
 
@@ -107,12 +107,12 @@ parse_equation(std::string_view input, size_t *offset)
 
 	Equation eq;
 
-	eq.lhs = parse_int(input, offset);
+	eq.lhs = parse_double(input, offset);
 	expect(parse_char(input, offset, ':'));
 	expect(parse_char(input, offset, ' '));
 
 	for (;;) {
-		double n = parse_int(input, offset);
+		double n = parse_double(input, offset);
 		eq.rhs.push_back(n);
 		if (parse_char(input, offset, '\n')) {
 			return eq;
@@ -122,7 +122,7 @@ parse_equation(std::string_view input, size_t *offset)
 }
 
 static double
-parse_int(std::string_view input, size_t *offset)
+parse_double(std::string_view input, size_t *offset)
 {
 	double i;
 	std::from_chars_result r =
