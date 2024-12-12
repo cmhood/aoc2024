@@ -53,7 +53,7 @@ Map::Map(std::string_view grid)
 		fprintf(stderr, "invalid input\n");
 		exit(EXIT_FAILURE);
 	}
-	m_width = (ptrdiff_t)newline + 1;
+	m_width = newline + 1;
 }
 
 std::set<ptrdiff_t>
